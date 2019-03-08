@@ -16,20 +16,23 @@ const options = {
     }
 };
 
-app.get("/todos", function(req, res)  { 
-        request(options, function(err, output, body) {  
-        let results = JSON.parse(body); 
-        res.json(results);
+app.get("/todos", (req, res) => { 
+        request(options, (err, output, body) => {  
+        let todos = JSON.parse(body); 
+
+        let todo = todos.filter(todo => todo.id.length < 25);
+        res.json(todos);
     });
 
 });
 
 
-app.get("/todos/transform", function(req, res)  { 
-    request(options, function(err, output, body) {  
+app.get("/todos/transform", (req, res) => { 
+    request(options, (err, output, body) => {  
     let results = JSON.parse(body); 
-    res.json({"userId": req.params.userId, "todos": [
-        { "id": req.params.id, "title": req.params.title, "completed": req.params.completed }
+    
+    res.json({userId: req.params.userId, todos: [
+        { id: req.params.id, title: req.params.title, completed: req.params.completed }
     ]});
     });
 
