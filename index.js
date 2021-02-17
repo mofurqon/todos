@@ -1,41 +1,43 @@
 const express = require('express'); 
 const bodyParser = require('body-parser');
+const axios = require('axios');
 const app = express();
-const request = require('request');
 
-
-app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-const options = {  
-    url: 'https://jsonplaceholder.typicode.com/todos',
-    method: 'GET',
-    headers: {
-        'Accept': 'application/json',
-        'Accept-Charset': 'utf-8'
+app.get('/todos', async (req, res) => {
+    const {idstart, idend} = req.query
+    try {
+        const todos = await axios.get('https://jsonplaceholder.typicode.com/todos');
+        if (idstart && idend) {
+            const todosFiltered = todos.data.filter(todo => todo.id >= idstart && todo.id <= idend);
+            res.json(todosFiltered);
+        } else {
+            res.json(todos.data);
+        }
+    } catch (err) {
+        console.log(err);
     }
-};
-
-app.get("/todos", (req, res) => { 
-        request(options, (err, output, body) => {  
-        let todos = JSON.parse(body); 
-
-        let todo = todos.filter(todo => todo.id.length < 25);
-        res.json(todos);
-    });
-
 });
 
+app.get('/transform/:id', async (req, res) => {
+    const user = req.params.id;
+    try {
+        const todos = await axios.get('https://jsonplaceholder.typicode.com/todos');
+        const transform = todos.data.filter(todos => todos.userId == user);
+        const result = [{
+            userId: transform[0].userId,
+            todos: transform.map(todo => ({
+                id: todo.id,
+                title: todo.title,
+                completed: todo.completed
+            }))
+        }]
 
-app.get("/todos/transform", (req, res) => { 
-    request(options, (err, output, body) => {  
-    let results = JSON.parse(body); 
-    
-    res.json({userId: req.params.userId, todos: [
-        { id: req.params.id, title: req.params.title, completed: req.params.completed }
-    ]});
-    });
-
+        res.json(result);
+    } catch (err) {
+        console.log(err);
+    }
 });
 
 const port = process.env.PORT || 8181;
